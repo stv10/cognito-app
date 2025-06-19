@@ -1,6 +1,8 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import { ThemeProvider, useTheme } from '../theme-provider';
+import '@testing-library/jest-dom';
+import { ThemeProvider, useTheme } from '../../src/components/theme-provider';
 
 // Mock localStorage
 const localStorageMock = {
