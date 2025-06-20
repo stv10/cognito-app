@@ -271,26 +271,16 @@ describe('ThemeProvider', () => {
   });
 
   describe('useTheme hook', () => {
-    it('should throw error when used outside ThemeProvider', () => {
-      // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
-      // Create a component that uses useTheme without ThemeProvider
+    it('should use system theme when used outside ThemeProvider', () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});      
       const TestComponentWithoutProvider = () => {
         const { theme } = useTheme();
-        return <div>{theme}</div>;
+        return <div data-testid="current-theme">{theme}</div>;
       };
       
-      let error: unknown;
-      try {
-        render(<TestComponentWithoutProvider />);
-      } catch (e: unknown) {
-        error = e;
-      }
-      expect(error).toBeDefined();
-      expect((error as Error).message).toBe('useTheme must be used within a ThemeProvider');
+      render(<TestComponentWithoutProvider />);
       
-      consoleSpy.mockRestore();
+      expect(screen.getByTestId('current-theme')).toHaveTextContent('system');
     });
 
     it('should provide theme and setTheme function when used within ThemeProvider', () => {
