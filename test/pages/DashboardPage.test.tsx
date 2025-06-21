@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import DashboardPage from '../DashboardPage';
+import DashboardPage from '../../src/pages/DashboardPage';
 
 describe('DashboardPage', () => {
   it('renders the dashboard page with all main elements', () => {
