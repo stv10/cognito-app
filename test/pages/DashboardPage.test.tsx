@@ -1,16 +1,66 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
-import DashboardPage from '../../src/pages/DashboardPage';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { BrowserRouter } from 'react-router-dom';
+import { useAuth } from 'react-oidc-context';
+import { DashboardIndex } from '../../src/components/DashboardIndex';
+import type { User } from 'oidc-client-ts';
+import type { AuthContextProps } from 'react-oidc-context';
+import type { UserManagerEvents } from 'oidc-client-ts';
+import '@testing-library/jest-dom';
+
+// Mock the useAuth hook
+vi.mock('react-oidc-context', () => ({
+  useAuth: vi.fn(),
+}));
+
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 describe('DashboardPage', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+    
+    // Mock authenticated user
+    const mockUser = {
+      access_token: 'test-access-token',
+      id_token: 'test-id-token',
+      refresh_token: 'test-refresh-token',
+    } as User;
+
+    const mockAuth: Partial<AuthContextProps> = {
+      isAuthenticated: true,
+      user: mockUser,
+      settings: {
+        authority: 'https://test.auth.com',
+        client_id: 'test-client',
+        redirect_uri: 'http://localhost:3000',
+      },
+      events: {
+        addUserLoaded: vi.fn(),
+        addUserUnloaded: vi.fn(),
+        addSilentRenewError: vi.fn(),
+        addUserSignedOut: vi.fn(),
+      } as unknown as UserManagerEvents,
+    };
+
+    vi.mocked(useAuth).mockReturnValue(mockAuth as AuthContextProps);
+  });
+
   it('renders the dashboard page with all main elements', () => {
-    render(<DashboardPage />);
+    render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
     // Test main heading and icon
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Protected')).toBeInTheDocument();
-
-    // Test authentication status card
     expect(screen.getByText('Authentication Status')).toBeInTheDocument();
     expect(screen.getByText('Your authentication is working correctly')).toBeInTheDocument();
     expect(screen.getByText('You are successfully authenticated and can access this protected route.')).toBeInTheDocument();
@@ -21,12 +71,16 @@ describe('DashboardPage', () => {
     expect(screen.getByText('The authentication system is working perfectly with shadcn/ui components!')).toBeInTheDocument();
 
     // Test features card
-    expect(screen.getByText('Features')).toBeInTheDocument();
-    expect(screen.getByText("What's available in this app")).toBeInTheDocument();
+    expect(screen.getByText('Quick Actions')).toBeInTheDocument();
+    expect(screen.getByText('Access your tasks and manage your workflow')).toBeInTheDocument();
   });
 
   it('renders all feature badges correctly', () => {
-    render(<DashboardPage />);
+    render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
     // Test all feature badges
     expect(screen.getByText('React Router')).toBeInTheDocument();
@@ -38,36 +92,23 @@ describe('DashboardPage', () => {
   });
 
   it('renders with correct CSS classes and structure', () => {
-    const { container } = render(<DashboardPage />);
+    const { container } = render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
-    // Test main container structure
-    const mainContainer = container.firstChild as HTMLElement;
-    expect(mainContainer).toHaveClass('min-h-screen', 'bg-background', 'pt-16');
-
-    // Test inner container
-    const innerContainer = mainContainer.firstChild as HTMLElement;
-    expect(innerContainer).toHaveClass('max-w-7xl', 'mx-auto', 'px-4', 'sm:px-6', 'lg:px-8', 'py-8');
-
-    // Test content wrapper
-    const contentWrapper = innerContainer.firstChild as HTMLElement;
-    expect(contentWrapper).toHaveClass('space-y-6');
-  });
-
-  it('renders the header section with correct styling', () => {
-    const { container } = render(<DashboardPage />);
-
-    // Test header section
-    const headerSection = container.querySelector('.flex.items-center.gap-2');
-    expect(headerSection).toBeInTheDocument();
-
-    // Test heading
-    const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading).toHaveClass('text-3xl', 'font-bold', 'text-foreground');
-    expect(heading).toHaveTextContent('Dashboard');
+    // Test grid container
+    const gridContainer = container.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.gap-6');
+    expect(gridContainer).toBeInTheDocument();
   });
 
   it('renders the authentication status card with correct structure', () => {
-    const { container } = render(<DashboardPage />);
+    const { container } = render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
     // Test card structure
     const authCard = container.querySelector('.bg-accent');
@@ -83,7 +124,11 @@ describe('DashboardPage', () => {
   });
 
   it('renders the grid layout with correct responsive classes', () => {
-    const { container } = render(<DashboardPage />);
+    const { container } = render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
     // Test grid container
     const gridContainer = container.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.gap-6');
@@ -91,7 +136,11 @@ describe('DashboardPage', () => {
   });
 
   it('renders all cards with proper card structure', () => {
-    const { container } = render(<DashboardPage />);
+    const { container } = render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
     // Test that we have multiple cards
     const cards = container.querySelectorAll('[class*="card"]');
@@ -100,24 +149,23 @@ describe('DashboardPage', () => {
     // Test card headers and content are present
     expect(screen.getByText('Authentication Status')).toBeInTheDocument();
     expect(screen.getByText('Welcome Message')).toBeInTheDocument();
-    expect(screen.getByText('Features')).toBeInTheDocument();
-  });
-
-  it('renders the badge with correct variant', () => {
-    render(<DashboardPage />);
-
-    // Test protected badge
-    const protectedBadge = screen.getByText('Protected');
-    expect(protectedBadge).toBeInTheDocument();
-    expect(protectedBadge.closest('div')).toHaveClass('ml-2');
+    expect(screen.getByText('Quick Actions')).toBeInTheDocument();
   });
 
   it('renders all feature badges in the correct layout', () => {
-    const { container } = render(<DashboardPage />);
+    const { container } = render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
-    // Test feature badges - there are 6 feature badges plus 1 "Protected" badge = 7 total
-    const featureBadges = screen.getAllByText(/React Router|Cognito Auth|shadcn\/ui|TypeScript|Tailwind CSS|Vite|Protected/);
-    expect(featureBadges).toHaveLength(8);
+    // Test feature badges - there are 6 feature badges in the Quick Actions card
+    expect(screen.getByText('React Router')).toBeInTheDocument();
+    expect(screen.getByText('Cognito Auth')).toBeInTheDocument();
+    expect(screen.getByText('shadcn/ui')).toBeInTheDocument();
+    expect(screen.getByText('TypeScript')).toBeInTheDocument();
+    expect(screen.getByText('Tailwind CSS')).toBeInTheDocument();
+    expect(screen.getByText('Vite')).toBeInTheDocument();
 
     // Test that badges are in flex containers
     const badgeContainers = container.querySelectorAll('.flex.items-center.gap-2');
@@ -125,7 +173,11 @@ describe('DashboardPage', () => {
   });
 
   it('renders the muted text content correctly', () => {
-    render(<DashboardPage />);
+    render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
     // Test muted text
     const mutedText = screen.getByText('The authentication system is working perfectly with shadcn/ui components!');
@@ -134,7 +186,11 @@ describe('DashboardPage', () => {
   });
 
   it('renders the authentication status message with user icon context', () => {
-    render(<DashboardPage />);
+    render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
 
     // Test the authentication message with icon context
     const authMessage = screen.getByText('You are successfully authenticated and can access this protected route.');

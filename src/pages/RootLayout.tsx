@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
-import Navbar from "./Navbar";
+import Navbar from "../components/Navbar";
 import LoadingPage from "./LoadingPage";
 
 const RootLayout = () => {
@@ -10,10 +10,7 @@ const RootLayout = () => {
   
   useEffect(() => {
     if (auth.error) {
-      navigate("/error", { 
-        state: { error: auth.error.message },
-        replace: true 
-      });
+      navigate("/error", { state: { error: auth.error.message } });
     }
   }, [auth.error, navigate]);
   

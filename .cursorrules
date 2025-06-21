@@ -1,0 +1,84 @@
+
+## Metadata
+
+**Description**:  
+Cursor rules for a modern TypeScript stack using React, React Router (Data APIs), ShadCN UI, Tailwind CSS, and Vite.
+
+**Tags**:  
+`react`, `react-router`, `shadcn`, `tailwind`, `typescript`, `vite`, `node`
+
+---
+
+## Match Criteria
+
+**Files matched**:  
+All `*.ts` and `*.tsx` files.
+
+**Language filter**:  
+TypeScript
+
+---
+
+## Settings
+
+### TypeScript Rules
+
+- Use `interfaces` instead of `type` aliases.
+- Do not use `enums`; prefer object maps or union types.
+- Prefer type-only imports (`import type`).
+- Enforce strict function types.
+
+### React Rules
+
+- Use the `function` keyword for defining pure components and utilities.
+- Avoid class components entirely.
+- Use descriptive and intention-revealing variable names (e.g., `isLoading`, `hasError`, `shouldUpdate`).
+- Favor named exports over default exports.
+- File structure inside modules should follow this order:
+  1. Exported main component
+  2. Subcomponents
+  3. Helpers
+  4. Static content
+  5. Types
+
+### Styling and UI (Tailwind CSS and ShadCN UI)
+
+- Use Tailwind CSS utility classes for all styling.
+- Favor declarative JSX over imperative DOM manipulation.
+- Use ShadCN UI components located under `@/components/ui`.
+  - Follow a minimal and accessible design system.
+  - Use layout primitives like `Card`, `Button`, `Input` when building UIs.
+
+### React Router (Data API Mode)
+
+#### Loaders
+
+- Define `loader` functions separately and modularize the logic.
+- Always type `loader` return values using interfaces.
+- Avoid inline logic inside route definitions.
+
+#### Actions
+
+- Use `<Form>` from React Router for all mutation operations.
+- Define `action` functions with explicit types.
+- Keep actions pure and side-effect-free where possible.
+
+#### Navigation
+
+- Use `useNavigate` instead of relying on direct history manipulation.
+- Prefer declarative route definitions using route config objects.
+
+### Performance Guidelines
+
+- Work with immutable data structures (avoid direct mutation).
+- Use efficient rendering patterns (e.g., memoization, derived state).
+- Optimize network requests: use proper caching, avoid over-fetching.
+- Use efficient state management: colocate state, reduce global state when unnecessary.
+
+### Formatting and Code Safety
+
+- Preserve import order exactly as written.
+- Never remove existing comments or commented-out code unless absolutely required.
+- Use curly braces for all control flow constructs (`if`, `else`, `for`, etc.).
+- Avoid clever or overly abstract code; prioritize clarity and maintainability.
+- Do not remove existing code unless absolutely necessary for new functionality.

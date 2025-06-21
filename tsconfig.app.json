@@ -30,5 +30,5 @@
       ]
     }
   },
-  "include": ["src", "test/setup.ts"]
+  "include": ["src", "test/setup.ts", "test/pages/DashboardPage.test.tsx"]
 }

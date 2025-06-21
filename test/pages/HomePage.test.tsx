@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useAuth } from 'react-oidc-context';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import HomePage from '../../src/pages/HomePage';
 import type { User } from 'oidc-client-ts';
 import type { AuthContextProps } from 'react-oidc-context';
@@ -14,8 +14,22 @@ vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(),
 }));
 
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 describe('HomePage', () => {
-  it('renders login screen when user is not authenticated', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+  });
+
+  it('redirects to login when user is not authenticated', () => {
     // Mock the useAuth hook to return not authenticated
     const mockAuth: Partial<AuthContextProps> = {
       isAuthenticated: false,
@@ -42,9 +56,7 @@ describe('HomePage', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText('Welcome to Cognito App')).toBeInTheDocument();
-    expect(screen.getByText('Please sign in to continue')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Login' })).toBeInTheDocument();
+    expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 
   it('renders welcome screen with dashboard link when user is authenticated', () => {
