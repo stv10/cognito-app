@@ -4,6 +4,7 @@ import { AuthProvider, type AuthProviderProps } from 'react-oidc-context'
 import { RouterProvider } from "react-router-dom";
 import { router } from './router';
 import "./index.css";
+import { ThemeProvider } from './components/theme-provider';
 
 const cognitoAuthConfig: AuthProviderProps = {
   authority: import.meta.env.VITE_AUTHORITY || "",
@@ -16,7 +17,9 @@ const cognitoAuthConfig: AuthProviderProps = {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider {...cognitoAuthConfig}>
-      <RouterProvider router={router} />
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <RouterProvider router={router} />
+      </ThemeProvider>
     </AuthProvider>
   </StrictMode>,
 )

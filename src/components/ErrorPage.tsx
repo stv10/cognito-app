@@ -1,11 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-interface ErrorPageProps {
-  error: string;
-}
+const ErrorPage = () => {
+  const location = useLocation();
+  const error = location.state?.error || "An error occurred";
 
-const ErrorPage = ({ error }: ErrorPageProps) => {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-background">
       <div className="bg-card p-8 rounded-lg shadow-lg border border-border">
