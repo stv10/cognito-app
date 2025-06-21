@@ -1,30 +1,32 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
-import { useTokenManager } from "@/lib/hooks/useTokenManager";
 import Navbar from "./Navbar";
-import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
-import { ThemeProvider } from "./theme-provider";
 
 const RootLayout = () => {
   const auth = useAuth();
+  const navigate = useNavigate();
   
-  // Use the token manager hook
-  useTokenManager();
-
-  if (auth.error) {
-    return <ErrorPage error={auth.error.message} />;
-  }
-
-  if (auth.isLoading) {
-    return <LoadingPage />;
-  }
-
+  useEffect(() => {
+    if (auth.error) {
+      navigate("/error", { 
+        state: { error: auth.error.message },
+        replace: true 
+      });
+    }
+  }, [auth.error, navigate]);
+  
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Navbar />
-      <Outlet />
-    </ThemeProvider>
+    <>
+      {auth.isLoading && <LoadingPage />}
+      {!auth.isLoading && (
+        <>
+          <Navbar />
+          <Outlet />
+        </>
+      )}
+    </>
   );
 };
 
