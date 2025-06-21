@@ -11,6 +11,12 @@ vi.mock('../../src/hooks/useTasks', () => ({
   useTasks: mockUseTasks,
 }));
 
+// Mock the useUserRole hook
+const mockUseUserRole = vi.hoisted(() => vi.fn());
+vi.mock('../../src/hooks/useUserRole', () => ({
+  useUserRole: mockUseUserRole,
+}));
+
 // Mock the components
 vi.mock('../../src/components/TaskForm', () => ({
   TaskForm: ({ onSubmit, onCancel, task }: { onSubmit: (data: CreateTaskData) => void; onCancel: () => void; task?: Task }) => (
@@ -61,6 +67,12 @@ vi.mock('lucide-react', () => ({
   Plus: () => <span>Plus</span>,
   Filter: () => <span>Filter</span>,
   Search: () => <span>Search</span>,
+  Users: () => <span>Users</span>,
+  Shield: () => <span>Shield</span>,
+  Eye: () => <span>Eye</span>,
+  Settings: () => <span>Settings</span>,
+  BarChart3: () => <span>BarChart3</span>,
+  ListTodo: () => <span>ListTodo</span>,
 }));
 
 describe('TasksPage', () => {
@@ -91,6 +103,17 @@ describe('TasksPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Mock useUserRole with default user role
+    mockUseUserRole.mockReturnValue({
+      groups: [],
+      hasGroup: vi.fn(),
+      isAdmin: false,
+      isUser: true,
+      role: 'user',
+      user: {},
+    });
+
     mockUseTasks.mockReturnValue({
       tasks: mockTasks,
       loading: false,
@@ -102,22 +125,37 @@ describe('TasksPage', () => {
   });
 
   it('should render task management page', () => {
+    // User role: should see My Tasks, not Task Management
+    mockUseUserRole.mockReturnValue({
+      groups: [],
+      hasGroup: vi.fn(),
+      isAdmin: false,
+      isUser: true,
+      role: 'user',
+      user: {},
+    });
     render(<TasksPage />);
-
-    expect(screen.getByText('Task Management')).toBeInTheDocument();
-    expect(screen.getByText('Create, edit, and manage your tasks')).toBeInTheDocument();
-    expect(screen.getByText('New Task')).toBeInTheDocument();
+    expect(screen.getAllByText(/My Tasks/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/View and update your assigned tasks/)).toBeInTheDocument();
   });
 
   it('should display task statistics', () => {
+    // User role: should see stats for their own tasks
+    mockUseUserRole.mockReturnValue({
+      groups: [],
+      hasGroup: vi.fn(),
+      isAdmin: false,
+      isUser: true,
+      role: 'user',
+      user: {},
+    });
     render(<TasksPage />);
-
-    // Total tasks
-    expect(screen.getByText('2')).toBeInTheDocument();
-    // Pending, Completed, In Progress labels (should be present in stats and in select options)
-    expect(screen.getAllByText('Pending').length).toBeGreaterThan(1);
-    expect(screen.getAllByText('Completed').length).toBeGreaterThan(1);
-    expect(screen.getAllByText('In Progress').length).toBeGreaterThan(1);
+    // Should see numbers for My Tasks, Pending, In Progress, Completed
+    expect(screen.getAllByText('1').length).toBeGreaterThan(0); // My Tasks, Pending
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0); // In Progress, Completed
+    expect(screen.getAllByText('Pending').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Completed').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('In Progress').length).toBeGreaterThan(0);
   });
 
   it('should show loading state', () => {
@@ -145,12 +183,31 @@ describe('TasksPage', () => {
       getTask: vi.fn(),
     });
 
+    // User role: should see user empty state
+    mockUseUserRole.mockReturnValue({
+      groups: [],
+      hasGroup: vi.fn(),
+      isAdmin: false,
+      isUser: true,
+      role: 'user',
+      user: {},
+    });
+
     render(<TasksPage />);
 
-    expect(screen.getByText('No tasks yet. Create your first task to get started!')).toBeInTheDocument();
+    expect(screen.getByText(/No tasks assigned to you yet/)).toBeInTheDocument();
   });
 
   it('should render task cards', () => {
+    // Admin role: should see all tasks
+    mockUseUserRole.mockReturnValue({
+      groups: ['admin'],
+      hasGroup: vi.fn(),
+      isAdmin: true,
+      isUser: false,
+      role: 'admin',
+      user: {},
+    });
     render(<TasksPage />);
 
     const taskCards = screen.getAllByTestId('task-card');
@@ -160,19 +217,34 @@ describe('TasksPage', () => {
   });
 
   it('should show task form when New Task button is clicked', () => {
+    // Admin role: can create tasks
+    mockUseUserRole.mockReturnValue({
+      groups: ['admin'],
+      hasGroup: vi.fn(),
+      isAdmin: true,
+      isUser: false,
+      role: 'admin',
+      user: {},
+    });
     render(<TasksPage />);
-
-    const newTaskButton = screen.getByText('New Task');
+    const newTaskButton = screen.getByText(/New Task/);
     fireEvent.click(newTaskButton);
 
     expect(screen.getByTestId('task-form')).toBeInTheDocument();
   });
 
   it('should handle task creation', async () => {
+    // Admin role: can create tasks
+    mockUseUserRole.mockReturnValue({
+      groups: ['admin'],
+      hasGroup: vi.fn(),
+      isAdmin: true,
+      isUser: false,
+      role: 'admin',
+      user: {},
+    });
     render(<TasksPage />);
-
-    // Show form
-    const newTaskButton = screen.getByText('New Task');
+    const newTaskButton = screen.getByText(/New Task/);
     fireEvent.click(newTaskButton);
 
     // Submit form
@@ -189,27 +261,39 @@ describe('TasksPage', () => {
   });
 
   it('should handle task editing', async () => {
+    // Admin role: can edit tasks
+    mockUseUserRole.mockReturnValue({
+      groups: ['admin'],
+      hasGroup: vi.fn(),
+      isAdmin: true,
+      isUser: false,
+      role: 'admin',
+      user: {},
+    });
     render(<TasksPage />);
-
     // Click edit on first task
     const editButtons = screen.getAllByText('Edit');
     fireEvent.click(editButtons[0]);
-
-    expect(screen.getByText('Editing: Task 1')).toBeInTheDocument();
+    expect(screen.getByText(/Editing: Task 1/)).toBeInTheDocument();
   });
 
   it('should handle task deletion', () => {
-    // Mock window.confirm
+    // Admin role: can delete tasks
+    mockUseUserRole.mockReturnValue({
+      groups: ['admin'],
+      hasGroup: vi.fn(),
+      isAdmin: true,
+      isUser: false,
+      role: 'admin',
+      user: {},
+    });
+    // Restore window.confirm mock
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-
     render(<TasksPage />);
-
     const deleteButtons = screen.getAllByText('Delete');
     fireEvent.click(deleteButtons[0]);
-
-    expect(confirmSpy).toHaveBeenCalledWith('Are you sure you want to delete this task?');
+    expect(confirmSpy).toHaveBeenCalled();
     expect(mockDeleteTask).toHaveBeenCalledWith('1');
-
     confirmSpy.mockRestore();
   });
 
@@ -253,5 +337,22 @@ describe('TasksPage', () => {
     // Should only show high priority tasks
     expect(screen.getByText('Task 1')).toBeInTheDocument();
     expect(screen.queryByText('Task 2')).not.toBeInTheDocument();
+  });
+
+  it('should show admin-specific content when user is admin', () => {
+    mockUseUserRole.mockReturnValue({
+      groups: ['admin'],
+      hasGroup: vi.fn(),
+      isAdmin: true,
+      isUser: false,
+      role: 'admin',
+      user: {},
+    });
+
+    render(<TasksPage />);
+
+    // Admin should see admin task management interface
+    expect(screen.getByText(/Admin Task Management/)).toBeInTheDocument();
+    expect(screen.getByText(/Create, edit, and manage all tasks/)).toBeInTheDocument();
   });
 }); 

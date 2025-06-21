@@ -13,6 +13,12 @@ vi.mock('react-oidc-context', () => ({
   useAuth: vi.fn(),
 }));
 
+// Mock the useUserRole hook
+const mockUseUserRole = vi.hoisted(() => vi.fn());
+vi.mock('../../src/hooks/useUserRole', () => ({
+  useUserRole: mockUseUserRole,
+}));
+
 // Mock useNavigate
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -51,6 +57,16 @@ describe('DashboardPage', () => {
     };
 
     vi.mocked(useAuth).mockReturnValue(mockAuth as AuthContextProps);
+
+    // Mock useUserRole with default user role
+    mockUseUserRole.mockReturnValue({
+      groups: [],
+      hasGroup: vi.fn(),
+      isAdmin: false,
+      isUser: true,
+      role: 'user',
+      user: mockUser,
+    });
   });
 
   it('renders the dashboard page with all main elements', () => {
@@ -61,17 +77,16 @@ describe('DashboardPage', () => {
     );
 
     // Test main heading and icon
-    expect(screen.getByText('Authentication Status')).toBeInTheDocument();
-    expect(screen.getByText('Your authentication is working correctly')).toBeInTheDocument();
-    expect(screen.getByText('You are successfully authenticated and can access this protected route.')).toBeInTheDocument();
+    expect(screen.getByText('User Dashboard')).toBeInTheDocument();
+    expect(screen.getAllByText('View and manage your assigned tasks').length).toBeGreaterThan(0);
 
     // Test welcome message card
     expect(screen.getByText('Welcome Message')).toBeInTheDocument();
     expect(screen.getByText("This is a protected route. You can only see this if you're authenticated.")).toBeInTheDocument();
-    expect(screen.getByText('The authentication system is working perfectly with shadcn/ui components!')).toBeInTheDocument();
+    expect(screen.getByText(/The authentication system is working perfectly/)).toBeInTheDocument();
 
     // Test features card
-    expect(screen.getByText('Quick Actions')).toBeInTheDocument();
+    expect(screen.getAllByText('Quick Actions')).toHaveLength(2);
     expect(screen.getByText('Access your tasks and manage your workflow')).toBeInTheDocument();
   });
 
@@ -103,24 +118,16 @@ describe('DashboardPage', () => {
     expect(gridContainer).toBeInTheDocument();
   });
 
-  it('renders the authentication status card with correct structure', () => {
-    const { container } = render(
+  it('renders the user role badge correctly', () => {
+    render(
       <BrowserRouter>
         <DashboardIndex />
       </BrowserRouter>
     );
 
-    // Test card structure
-    const authCard = container.querySelector('.bg-accent');
-    expect(authCard).toBeInTheDocument();
-
-    // Test card content
-    const cardContent = screen.getByText('You are successfully authenticated and can access this protected route.');
-    expect(cardContent).toBeInTheDocument();
-    
-    // Test the paragraph element that contains the text
-    const paragraphElement = cardContent.closest('p');
-    expect(paragraphElement).toHaveClass('text-accent-foreground', 'text-sm', 'flex', 'items-center', 'gap-2');
+    // Test role badge - there are multiple elements with "user" text, so use getAllByText
+    const userElements = screen.getAllByText('user');
+    expect(userElements.length).toBeGreaterThan(0);
   });
 
   it('renders the grid layout with correct responsive classes', () => {
@@ -147,9 +154,8 @@ describe('DashboardPage', () => {
     expect(cards.length).toBeGreaterThan(0);
 
     // Test card headers and content are present
-    expect(screen.getByText('Authentication Status')).toBeInTheDocument();
     expect(screen.getByText('Welcome Message')).toBeInTheDocument();
-    expect(screen.getByText('Quick Actions')).toBeInTheDocument();
+    expect(screen.getAllByText('Quick Actions')).toHaveLength(2);
   });
 
   it('renders all feature badges in the correct layout', () => {
@@ -179,25 +185,78 @@ describe('DashboardPage', () => {
       </BrowserRouter>
     );
 
-    // Test muted text
-    const mutedText = screen.getByText('The authentication system is working perfectly with shadcn/ui components!');
+    // Test muted text using regex to handle text split across elements
+    const mutedText = screen.getByText(/The authentication system is working perfectly/);
     expect(mutedText).toBeInTheDocument();
     expect(mutedText).toHaveClass('text-muted-foreground');
   });
 
-  it('renders the authentication status message with user icon context', () => {
+  it('renders user-specific content when user role is user', () => {
+    mockUseUserRole.mockReturnValue({
+      groups: [],
+      hasGroup: vi.fn(),
+      isAdmin: false,
+      isUser: true,
+      role: 'user',
+      user: {} as User,
+    });
+
     render(
       <BrowserRouter>
         <DashboardIndex />
       </BrowserRouter>
     );
 
-    // Test the authentication message with icon context
-    const authMessage = screen.getByText('You are successfully authenticated and can access this protected route.');
-    expect(authMessage).toBeInTheDocument();
-    
-    // Test that it's in a paragraph with flex classes (indicating icon presence)
-    const paragraphElement = authMessage.closest('p');
-    expect(paragraphElement).toHaveClass('text-accent-foreground', 'text-sm', 'flex', 'items-center', 'gap-2');
+    // Test user-specific content
+    expect(screen.getByText('My Tasks Overview')).toBeInTheDocument();
+    expect(screen.getAllByText('View and manage your assigned tasks')).toHaveLength(2);
+    expect(screen.getAllByText('Quick Actions')).toHaveLength(2);
+    expect(screen.getByText('Common actions for task management')).toBeInTheDocument();
+  });
+
+  it('renders admin-specific content when user role is admin', () => {
+    mockUseUserRole.mockReturnValue({
+      groups: ['admin'],
+      hasGroup: vi.fn(),
+      isAdmin: true,
+      isUser: false,
+      role: 'admin',
+      user: {} as User,
+    });
+
+    render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
+
+    // Test admin-specific content
+    expect(screen.getByText('Admin Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Manage tasks, users, and system settings')).toBeInTheDocument();
+    expect(screen.getByText('Admin Controls')).toBeInTheDocument();
+    expect(screen.getByText('Manage system settings and user permissions')).toBeInTheDocument();
+    expect(screen.getByText('System Analytics')).toBeInTheDocument();
+    expect(screen.getByText('View system-wide statistics and performance metrics')).toBeInTheDocument();
+  });
+
+  it('renders the role badge with correct variant for admin', () => {
+    mockUseUserRole.mockReturnValue({
+      groups: ['admin'],
+      hasGroup: vi.fn(),
+      isAdmin: true,
+      isUser: false,
+      role: 'admin',
+      user: {} as User,
+    });
+
+    render(
+      <BrowserRouter>
+        <DashboardIndex />
+      </BrowserRouter>
+    );
+
+    // Test admin role badge - there are multiple elements with "admin" text
+    const adminElements = screen.getAllByText('admin');
+    expect(adminElements.length).toBeGreaterThan(0);
   });
 }); 
