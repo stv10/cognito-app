@@ -9,9 +9,18 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: Task['status']) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-export const TaskCard = ({ task, onEdit, onDelete, onStatusChange }: TaskCardProps) => {
+export const TaskCard = ({ 
+  task, 
+  onEdit, 
+  onDelete, 
+  onStatusChange, 
+  canEdit = true, 
+  canDelete = true 
+}: TaskCardProps) => {
   const getPriorityColor = (priority: Task['priority']) => {
     switch (priority) {
       case 'high':
@@ -75,25 +84,32 @@ export const TaskCard = ({ task, onEdit, onDelete, onStatusChange }: TaskCardPro
               variant="outline"
               onClick={() => onStatusChange(task.id, getNextStatus(task.status))}
               className="h-8 w-8 p-0"
+              title="Change Status"
             >
               {getStatusIcon(getNextStatus(task.status))}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onEdit(task)}
-              className="h-8 w-8 p-0"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onDelete(task.id)}
-              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onEdit(task)}
+                className="h-8 w-8 p-0"
+                title="Edit Task"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onDelete(task.id)}
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                title="Delete Task"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>

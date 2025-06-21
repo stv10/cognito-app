@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Filter, Search } from 'lucide-react';
+import { Plus, Filter, Search, Shield, Users } from 'lucide-react';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskCard } from '@/components/TaskCard';
 import { useTasks } from '@/hooks/useTasks';
+import { useUserRole } from '@/hooks/useUserRole';
 import type { Task, CreateTaskData, UpdateTaskData } from '@/types/task';
 
 export const TasksPage = () => {
   const { tasks, loading, createTask, updateTask, deleteTask } = useTasks();
+  const { isAdmin, role } = useUserRole();
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,11 +39,22 @@ export const TasksPage = () => {
   };
 
   const handleEditTask = (task: Task) => {
+    // Only admins can edit tasks
+    if (!isAdmin) {
+      alert('You do not have permission to edit tasks. Please contact an administrator.');
+      return;
+    }
     setEditingTask(task);
     setShowForm(true);
   };
 
   const handleDeleteTask = (id: string) => {
+    // Only admins can delete tasks
+    if (!isAdmin) {
+      alert('You do not have permission to delete tasks. Please contact an administrator.');
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to delete this task?')) {
       deleteTask(id);
     }
@@ -51,17 +64,32 @@ export const TasksPage = () => {
     updateTask(id, { status });
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+  // Filter tasks based on user role
+  const getFilteredTasks = () => {
+    let filteredTasks = tasks.filter((task) => {
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           task.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
+      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+      
+      return matchesSearch && matchesStatus && matchesPriority;
+    });
+
+    // If user is not admin, only show tasks assigned to them (mock implementation)
+    if (!isAdmin) {
+      // In a real app, you'd filter by actual assignment
+      // For now, we'll show a subset of tasks for demonstration
+      filteredTasks = filteredTasks.slice(0, Math.ceil(filteredTasks.length / 2));
+    }
+
+    return filteredTasks;
+  };
+
+  const filteredTasks = getFilteredTasks();
 
   const getStatusCount = (status: Task['status']) => {
-    return tasks.filter(task => task.status === status).length;
+    const tasksToCount = isAdmin ? tasks : getFilteredTasks();
+    return tasksToCount.filter(task => task.status === status).length;
   };
 
   if (loading) {
@@ -76,22 +104,62 @@ export const TasksPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Task Management</h2>
-          <p className="text-muted-foreground">Create, edit, and manage your tasks</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              {isAdmin ? (
+                <>
+                  <Shield className="h-6 w-6 text-red-500" />
+                  Admin Task Management
+                </>
+              ) : (
+                <>
+                  <Users className="h-6 w-6 text-blue-500" />
+                  My Tasks
+                </>
+              )}
+            </h2>
+            <p className="text-muted-foreground">
+              {isAdmin 
+                ? "Create, edit, and manage all tasks in the system" 
+                : "View and update your assigned tasks"
+              }
+            </p>
+          </div>
+          <Badge variant={isAdmin ? "destructive" : "secondary"}>
+            {role}
+          </Badge>
         </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Task
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Task
+          </Button>
+        )}
       </div>
+
+      {/* Role-based info card */}
+      {!isAdmin && (
+        <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <Users className="h-4 w-4" />
+              <p className="text-sm">
+                You are viewing your assigned tasks. Only administrators can create, edit, or delete tasks.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">{tasks.length}</div>
-            <div className="text-sm text-muted-foreground">Total Tasks</div>
+            <div className="text-2xl font-bold">{filteredTasks.length}</div>
+            <div className="text-sm text-muted-foreground">
+              {isAdmin ? "Total Tasks" : "My Tasks"}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -114,8 +182,8 @@ export const TasksPage = () => {
         </Card>
       </div>
 
-      {/* Form */}
-      {showForm && (
+      {/* Form - Only show for admins */}
+      {showForm && isAdmin && (
         <TaskForm
           task={editingTask || undefined}
           onSubmit={handleSubmit}
@@ -183,7 +251,7 @@ export const TasksPage = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">
-            Tasks ({filteredTasks.length})
+            {isAdmin ? "All Tasks" : "My Tasks"} ({filteredTasks.length})
           </h3>
           {filteredTasks.length === 0 && tasks.length > 0 && (
             <Badge variant="outline">No tasks match your filters</Badge>
@@ -193,11 +261,18 @@ export const TasksPage = () => {
         {filteredTasks.length === 0 && tasks.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No tasks yet. Create your first task to get started!</p>
-              <Button onClick={() => setShowForm(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Task
-              </Button>
+              <p className="text-muted-foreground mb-4">
+                {isAdmin 
+                  ? "No tasks yet. Create your first task to get started!" 
+                  : "No tasks assigned to you yet."
+                }
+              </p>
+              {isAdmin && (
+                <Button onClick={() => setShowForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Task
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -209,6 +284,8 @@ export const TasksPage = () => {
                 onEdit={handleEditTask}
                 onDelete={handleDeleteTask}
                 onStatusChange={handleStatusChange}
+                canEdit={isAdmin}
+                canDelete={isAdmin}
               />
             ))}
           </div>

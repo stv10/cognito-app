@@ -5,7 +5,7 @@
 Cursor rules for a modern TypeScript stack using React, React Router (Data APIs), ShadCN UI, Tailwind CSS, and Vite.
 
 **Tags**:  
-`react`, `react-router`, `shadcn`, `tailwind`, `typescript`, `vite`, `node`
+`react`, `react-router`, `shadcn`, `tailwind`, `typescript`, `vite`, `node` , `cognito`
 
 ---
 
@@ -82,3 +82,8 @@ TypeScript
 - Use curly braces for all control flow constructs (`if`, `else`, `for`, etc.).
 - Avoid clever or overly abstract code; prioritize clarity and maintainability.
 - Do not remove existing code unless absolutely necessary for new functionality.
+
+
+### Project description
+- Proof of concept App, to learn authentication with cognito aws
+- With tasks management, RBAC with cognito groups, 
