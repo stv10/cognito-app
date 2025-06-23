@@ -1,19 +1,21 @@
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { TaskForm } from '@/components/TaskForm';
-import type { Task } from '@/types/task';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { TaskForm } from '../../src/components/TaskForm';
+import type { Task } from '../../src/types/task';
+import '@testing-library/jest-dom';
 
 // Mock the UI components
-vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, type, disabled, ...props }: any) => (
+vi.mock('../../src/components/ui/button', () => ({
+  Button: ({ children, onClick, type, disabled, ...props }: React.ComponentProps<'button'>) => (
     <button onClick={onClick} type={type} disabled={disabled} {...props}>
       {children}
     </button>
   ),
 }));
 
-vi.mock('@/components/ui/input', () => ({
-  Input: ({ value, onChange, placeholder, required, ...props }: any) => (
+vi.mock('../../src/components/ui/input', () => ({
+  Input: ({ value, onChange, placeholder, required, ...props }: React.ComponentProps<'input'>) => (
     <input
       value={value}
       onChange={onChange}
@@ -24,8 +26,8 @@ vi.mock('@/components/ui/input', () => ({
   ),
 }));
 
-vi.mock('@/components/ui/textarea', () => ({
-  Textarea: ({ value, onChange, placeholder, rows, ...props }: any) => (
+vi.mock('../../src/components/ui/textarea', () => ({
+  Textarea: ({ value, onChange, placeholder, rows, ...props }: React.ComponentProps<'textarea'>) => (
     <textarea
       value={value}
       onChange={onChange}
@@ -36,11 +38,11 @@ vi.mock('@/components/ui/textarea', () => ({
   ),
 }));
 
-vi.mock('@/components/ui/card', () => ({
-  Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  CardContent: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  CardHeader: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  CardTitle: ({ children, ...props }: any) => <h3 {...props}>{children}</h3>,
+vi.mock('../../src/components/ui/card', () => ({
+  Card: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
+  CardContent: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
+  CardHeader: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
+  CardTitle: ({ children, ...props }: React.ComponentProps<'h3'>) => <h3 {...props}>{children}</h3>,
 }));
 
 describe('TaskForm', () => {
